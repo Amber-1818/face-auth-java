@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login with Face</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #f0f2f5; padding: 50px; }
+        .box { width: 500px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        input, button { padding: 12px; margin: 10px; width: 280px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #1877f2; color: white; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: bold; }
+        video { width: 300px; height: 300px; border: 3px solid #1877f2; border-radius: 10px; margin: 10px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Login with Face</h2>
+    <input type="text" id="userId" placeholder="Enter Your ID (e.g., kohli)" required /><br>
+    <video id="video" autoplay playsinline></video><br>
+    <button onclick="startCamera()">Start Camera</button>
+    <button id="loginBtn" onclick="loginFace()" disabled>Verify Face</button>
+    <p id="status">Click "Start Camera" to begin.</p>
+    <a href="/index.html">Back</a>
+</div>
+
+<script>
+    let stream;
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const loginBtn = document.getElementById('loginBtn');
+
+    async function startCamera() {
+      status.innerHTML = "Starting camera...";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        video.srcObject = stream;
+        status.innerHTML = "Camera ON! Click Verify.";
+        loginBtn.disabled = false;
+      } catch (err) {
+        status.innerHTML = `<span style="color:red">Camera access denied!</span>`;
+      }
+    }
+
+    async function loginFace() {
+      const userId = document.getElementById('userId').value.trim();
+      if (!userId) return status.innerHTML = `<span style="color:red">Enter ID!</span>`;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+
+      const form = new FormData();
+      form.append('userId', userId);
+      form.append('image', blob, 'face.jpg');
+
+      loginBtn.disabled = true;
+      status.innerHTML = "Verifying...";
+
+      const res = await fetch('/api/face/verify', { method: 'POST', body: form });
+      const data = await res.json();
+
+      status.innerHTML = data.success
+        ? `<span style="color:green">Login Success! Welcome ${userId}!</span>`
+        : `<span style="color:red">Login Failed!</span>`;
+      loginBtn.disabled = false;
+    }
+</script>
+</body>
+</html>

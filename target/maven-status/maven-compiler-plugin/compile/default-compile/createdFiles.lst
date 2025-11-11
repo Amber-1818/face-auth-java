@@ -1,0 +1,5 @@
+com\example\faceauth\service\FaceAuthService.class
+com\example\faceauth\controller\FaceAuthController.class
+com\example\faceauth\FaceAuthSystemApplication.class
+com\example\faceauth\repository\UserEmbeddingRepository.class
+com\example\faceauth\model\UserEmbedding.class

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register Face</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #f0f2f5; padding: 50px; }
+        .box { width: 500px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        input, button { padding: 12px; margin: 10px; width: 280px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #42b72a; color: white; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: bold; }
+        video { width: 300px; height: 300px; border: 3px solid #42b72a; border-radius: 10px; margin: 10px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Register Your Face</h2>
+    <input type="text" id="userId" placeholder="Enter Your ID (e.g., kohli)" required /><br>
+    <video id="video" autoplay playsinline></video><br>
+    <button onclick="startCamera()">Start Camera</button>
+    <button id="regBtn" onclick="registerFace()" disabled>Register Face</button>
+    <p id="status">Click "Start Camera" to begin.</p>
+    <a href="/index.html">Back</a>
+</div>
+
+<script>
+    let stream;
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const regBtn = document.getElementById('regBtn');
+
+    async function startCamera() {
+      status.innerHTML = "Starting camera...";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        video.srcObject = stream;
+        status.innerHTML = "Camera ON! Click Register.";
+        regBtn.disabled = false;
+      } catch (err) {
+        status.innerHTML = `<span style="color:red">Camera access denied!</span>`;
+      }
+    }
+
+    async function registerFace() {
+      const userId = document.getElementById('userId').value.trim();
+      if (!userId) return status.innerHTML = `<span style="color:red">Enter ID!</span>`;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+
+      const form = new FormData();
+      form.append('userId', userId);
+      form.append('image', blob, 'face.jpg');
+
+      regBtn.disabled = true;
+      status.innerHTML = "Registering...";
+
+      const res = await fetch('/api/face/register', { method: 'POST', body: form });
+      const data = await res.json();
+
+      status.innerHTML = data.success
+        ? `<span style="color:green">Registered: ${userId}!</span>`
+        : `<span style="color:red">${data.error}</span>`;
+      regBtn.disabled = false;
+    }
+</script>
+</body>
+</html>
