@@ -4,6 +4,7 @@ import com.example.faceauth.model.UserEmbedding;
 import com.example.faceauth.repository.UserEmbeddingRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,7 +21,8 @@ public class FaceAuthService {
     private RestTemplate restTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final String PYTHON_URL = "http://localhost:5000/api/process_face";
+    @Value("${python.url}")
+    private String PYTHON_URL;
 
     public double[] getEmbeddingFromPython(byte[] imageBytes) throws Exception {
         String base64 = java.util.Base64.getEncoder().encodeToString(imageBytes);
